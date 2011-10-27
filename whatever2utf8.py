@@ -1,12 +1,12 @@
 #whatever 2 UTF8
 
-from sys import argv
+from sys import argv, exit
 from codecs import open as codopen, BOM_UTF8
 from os.path import splitext
 
 if len(argv) < 2 or len(argv) > 4: 
 	print "Need stuff: filename ['BOM'] [encoding]  Where encoding can be anything from http://docs.python.org/library/codecs.html#standard-encodings", argv
-	sys.exit()
+	exit(1)
 	
 fname = argv[1]
 enc = "sjis"

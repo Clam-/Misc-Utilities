@@ -1,5 +1,6 @@
-# fileHashTools.py  v1.1
+# fileHashTools.py  
 
+# Moved to github. History in commit messages.
 # 1.1 Only import ProgressBar when needed. Better handling of file access errors. (Somewhat)
 # 1.0 Shouldn't crash with unicode, but it's a bit of a crude fix. Unicode filenames
 #	will only print correctly if the terminal is expecting encoded UTF-8 and if the 
@@ -16,8 +17,8 @@
 # If you do NOT specify a file(s) then program will check to see if there are checksums in the
 # filenames of the current folder that match
 
-# default mode is CRC
-# mode ONLY applies to "filename checking" like the above example, AND when creating a checksum file.
+# default method is CRC
+# method ONLY applies to "filename checking" like the above example, AND when creating a checksum file.
 # it does NOT apply when verfiying checksums (because of extension .md5, .sfv, .crc)
 
 #I don't suggest using absolute paths.
@@ -229,7 +230,7 @@ cwd = getcwdu()
 Globals.cwd = cwd
 mode = "check"
 
-parser = OptionParser(usage="usage: %prog [options] [mode] [dir[s]/drive[s]]")
+parser = OptionParser(usage="usage: %prog [options] [dir[s]/drive[s]]")
 parser.add_option("--verbose", action="store_true", dest="verbose", default=False,
 	help="Enable printing verbose hash match messages.")
 parser.add_option("-v", "--verify", dest="verify", action="store_true", default=True,

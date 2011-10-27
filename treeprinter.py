@@ -348,7 +348,7 @@ for path in paths:
 			widgets = ["Reading %s " % drive.letter, AnimatedMarker(), ' ', Timer()]
 			progress = ProgressWrapper(ProgressBar(term_width=consolesize, widgets=widgets, maxval=drive.totalsize-drive.free).start())
 	start(path, drive, progress)
-	progress.finish()
+	if progress: progress.finish()
 	
 #do final printing stuff here I guess
 for drive in sorted(drives.keys()):
