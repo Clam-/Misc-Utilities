@@ -8,7 +8,7 @@ FileHashTools is a tool that lets you work with checksums and files. It can be u
 printhash is just a simple script that will print out the md5 or crc for a given file.
 
 [stdinhelper](http://github.com/Clam-/Misc-Utilities/wiki/stdinhelper)  
-I can't really remember what this does yet.
+stdhelper can take a file and normal stdin and pass it to a specified program, optionally able to delay input. UNIX ONLY (at this point in time.)
 
 [subextractreplace](http://github.com/Clam-/Misc-Utilities/wiki/subextractreplace)  
 subextractreplace lets you extract subtitles from a lot of mkv's. It also lets you replace certain tokens in those subtitles, and then if you wish, you can remux it back into mkv.
