@@ -10,7 +10,7 @@ from subprocess import Popen, PIPE
 from StringIO import StringIO
 from os import devnull, fdopen, fsync
 from pty import openpty
-class ReadShit(Thread):
+class ReadStuff(Thread):
 	def __init__(self, q, incoming):
 		Thread.__init__(self)
 		self.q = q
@@ -29,7 +29,7 @@ class ReadShit(Thread):
 				print "a", line
 				# if line == "":
 					# break
-				# elif line == "STOPSHIT\n":
+				# elif line == "STOP\n":
 					# break
 				# else:
 				if not self.iq.empty():
@@ -82,7 +82,7 @@ if not options.wait:
 print "Starting input thread"
 console = Queue()
 tothread = Queue()
-cons = ReadShit(console, tothread)
+cons = ReadStuff(console, tothread)
 cons.start()	
 
 print "EXECUTING: %s" % " ".join(args)

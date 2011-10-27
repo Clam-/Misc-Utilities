@@ -36,14 +36,14 @@ from logging import basicConfig, getLogger, DEBUG, INFO
 basicConfig(level=INFO, format="%(asctime)s %(levelname)s [%(name)s] %(message)s", datefmt="%H:%M:%S")
 log = getLogger("subextractreplace")
 
-class GayEx:
-	gayExTrack = recompile(r"\|  \+ Track number\: ([0-9]+)")
-	gayExDefault = recompile(r"\|  \+ Default flag\: ([01])")
-	gayExCodec = recompile(r"\|  \+ Codec ID\: (.+)")
-	gayExLang = recompile(r"\|  \+ Language\: ([a-z]{3})")
-	gayExName = recompile(r"\|  \+ Name\: (.*)")
-	gayExTitle = recompile(r"\| \+ Title\: (.*)")
-	gayExSegUID = recompile(r"\| \+ Segment UID\: (.*)")
+class TrackThings:
+	regexTrack = recompile(r"\|  \+ Track number\: ([0-9]+)")
+	regexDefault = recompile(r"\|  \+ Default flag\: ([01])")
+	regexCodec = recompile(r"\|  \+ Codec ID\: (.+)")
+	regexLang = recompile(r"\|  \+ Language\: ([a-z]{3})")
+	regexName = recompile(r"\|  \+ Name\: (.*)")
+	regexTitle = recompile(r"\| \+ Title\: (.*)")
+	regexSegUID = recompile(r"\| \+ Segment UID\: (.*)")
 	subtemplate = '"--language" "0:{lang}" "--track-name" "0:{trackname}" "--default-track" "0:{default}" "--forced-track" "0:no" "-s" "0" "-D" "-A" "-T" "--no-global-tags" "--no-chapters" "{fname}"'
 	
 class Track:
@@ -95,10 +95,10 @@ def _getsublist(s):
 			mode = 2
 			continue
 		if mode == 2:
-			m = GayEx.gayExTitle.match(line)
+			m = TrackThings.regexTitle.match(line)
 			if m:
 				fileinfo["title"] = m.group(1)
-			m = GayEx.gayExSegUID.match(line)
+			m = TrackThings.regexSegUID.match(line)
 			if m:
 				fileinfo["SegUID"] = m.group(1)
 		elif mode == 0:
@@ -111,17 +111,17 @@ def _getsublist(s):
 				mode = None
 				continue
 			#from here on out, assume track of any kind.
-			m = GayEx.gayExTrack.match(line)
+			m = TrackThings.regexTrack.match(line)
 			if m:
 				track.num = m.group(1)
 				continue
 			if line == '|  + Track type: subtitles': track.subs = True
-			m = GayEx.gayExDefault.match(line)
+			m = TrackThings.regexDefault.match(line)
 			if m:
 				if m.group(1) == "1": track.default = True
 				else: track.default = False
 				continue
-			m = GayEx.gayExCodec.match(line)
+			m = TrackThings.regexCodec.match(line)
 			if m:
 				ext = m.group(1)
 				if "VOBSUB" in ext: track.ext = "."
@@ -129,11 +129,11 @@ def _getsublist(s):
 				elif "/ASS" in ext: track.ext = ".ass"
 				else: track.ext = ""
 				continue
-			m = GayEx.gayExLang.match(line)
+			m = TrackThings.regexLang.match(line)
 			if m:
 				track.lang = m.group(1)
 				continue
-			m = GayEx.gayExName.match(line)
+			m = TrackThings.regexName.match(line)
 			if m:
 				track.name = m.group(1)
 				continue
@@ -190,15 +190,15 @@ def extractsub(path, options):
 				tempfiles.append(oldfile)
 				tempfiles.append(newfile)
 				replacesubtext(oldfile, newfile, reps)
-				#GayEx.subtemplate
+				#TrackThings.subtemplate
 				# {lang}{trackname}{default}{fname}
 				if not options.default:
-					muxoptions.append(GayEx.subtemplate.format(lang=track.lang, trackname=track.name, default="yes" if track.default else "no", fname=newfile))
+					muxoptions.append(TrackThings.subtemplate.format(lang=track.lang, trackname=track.name, default="yes" if track.default else "no", fname=newfile))
 				else:
 					if track.num == options.default:
-						muxoptions.append(GayEx.subtemplate.format(lang=track.lang, trackname=track.name, default="yes", fname=newfile))
+						muxoptions.append(TrackThings.subtemplate.format(lang=track.lang, trackname=track.name, default="yes", fname=newfile))
 					else:
-						muxoptions.append(GayEx.subtemplate.format(lang=track.lang, trackname=track.name, default="no", fname=newfile))
+						muxoptions.append(TrackThings.subtemplate.format(lang=track.lang, trackname=track.name, default="no", fname=newfile))
 				
 				
 		# if remux do things here

@@ -326,7 +326,7 @@ for drive in result:
 		serial=int(drive.VolumeSerialNumber, 16), size=int(drive.Size), free=int(drive.FreeSpace))
 
 if options.all:
-	#do everyshit here, don't even care what folders person put
+	#do everythings here, don't even care what folders person put
 	paths = []
 	for drive in drives:
 		paths.append(drive+"\\")
