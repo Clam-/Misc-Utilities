@@ -19,7 +19,7 @@
 
 # default method is CRC
 # method ONLY applies to "filename checking" like the above example, AND when creating a checksum file.
-# it does NOT apply when verfiying checksums (because of extension .md5, .sfv, .crc)
+# it does NOT apply when verfiying checksums in a file (because of extension .md5, .sfv, .crc)
 
 #I don't suggest using absolute paths.
 # before using it on megas files, test it on a small subset of test files in a test folder and whatnot.
@@ -58,6 +58,7 @@ class Globals:
 	invalid = 0
 	progress = False
 	consolesize = 0
+	options = None
 	
 class Hash:
 	def __init__(self, chunk, method):
@@ -121,6 +122,10 @@ def checkfile(path, method):
 	# crc32(data) & 0xffffffff	
 
 def checkpath(path, method):
+	if not exists(path): 
+		log.warn("Not found: %s" % path)
+		return
+		
 	if isdir(path):
 		for fname in listdir(path):
 			if isdir(join(path,fname)):
@@ -175,13 +180,13 @@ def checksums(fname, method):
 				LogUtil.printlog("File not found: %s" % fname)
 				Globals.notfound += 1
 		else:
+			if Globals.options.aster:
+				if fname[0] == "*":
+					fname = fname[1:]
 			if exists(join(Globals.cwd, fname)):
 				compsum(join(Globals.cwd, fname),hash,mode)
-				
-			elif fname[0] == "*":
-				if exists(join(Globals.cwd, fname[1:])):
-					compsum(join(Globals.cwd, fname[1:]),hash,mode)
-
+			else:
+				LogUtil.printlog("File not found: %s" % fname)
 
 def _getnextfname(method):
 	if method == "crc":
@@ -226,8 +231,7 @@ def printsum(path,method,cont=False):
 			LogUtil.printlog("%s %s" % (getsum(path,method), relpath(path)))
 
 # ######################### #
-cwd = getcwdu()
-Globals.cwd = cwd
+Globals.cwd = getcwdu()
 mode = "check"
 
 parser = OptionParser(usage="usage: %prog [options] [dir[s]/drive[s]]")
@@ -248,6 +252,8 @@ parser.add_option("-m", "--method", dest="method", default="CRC", metavar="CRC|M
 	help="Method (CRC or MD5), default is CRC.")
 parser.add_option("-o", "--output", dest="output", metavar="FILE", default=None,
 	help="Output to this file.")
+parser.add_option("--asterisk", dest="aster", action="store_true", default=False,
+	help="MD5 file has * prefixed sums.")
 parser.add_option("--quiet", dest="quiet", action="store_true", default=False,
 	help="Don't print results to stdout. Only makes sense to use this with --output.")
 (options, args) = parser.parse_args()
@@ -264,7 +270,7 @@ elif options.contcreate:
 	if not options.output:
 		log.error("Continue create doesn't really make sense without an output file. Bailing.")
 		exit(1)
-	log.warn("WARNING: ATTEMPING TO APPEND TO (%s). You should probably backup this file. \nPress buttan." % options.output)
+	log.warn("WARNING: ATTEMPING TO APPEND TO (%s). You should probably backup this file. \nPress button to continue." % options.output)
 	raw_input()
 	copyfile(options.output, options.output+".tmp")
 	Globals.tmpfile = codopen(options.output+".tmp", "r", "utf-8")
@@ -295,6 +301,7 @@ if options.progress:
 
 Globals.consolesize = Console.getconsolewidth()
 #end options
+Globals.options = options
 
 paths = buildpathlist(args)
 			
@@ -303,7 +310,7 @@ for path in paths:
 		printsum(path, options.method)
 	elif mode == "Continue":
 		printsum(path, options.method, cont=True)
-	else:
+	elif mode == "check":
 		if isfile(path) and (splitext(path)[1] == ".md5" or splitext(path)[1] == ".crc" or splitext(path)[1] == ".sfv"):
 			checksums(path, options.method)
 		else:
