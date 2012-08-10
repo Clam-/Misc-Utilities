@@ -1,4 +1,4 @@
-#util v0.3
+#util v0.4 - moved to github commit updatess
 # 0.3 added size_to_human, fixed some tard bug
 # 0.2 change print to unicodes
 #nothing to run here
@@ -10,7 +10,7 @@ from os.path import isabs, abspath, exists, join
 from logging import getLogger
 log = getLogger(__name__)
 
-version = 0.3
+version = 0.4
 
 def size_to_human(size, unit=1024, round=5):
 	if size:
@@ -60,7 +60,7 @@ class Console:
 	@staticmethod
 	def getconsolewidth():
 		if platform == "win32":
-			Console.width = get_windows_term_width()
+			Console.width = get_windows_term_width() - 1
 			return Console.width
 		else:
 			Console.width = int(environ.get('COLUMNS', 80)) - 1
@@ -74,7 +74,7 @@ class Console:
 	
 	@staticmethod
 	def trimstring(s):
-		sizes = int(Console.width*(75/100.0))
+		sizes = int(Console.width*(72/100.0))
 		return s if len(s) <= sizes else s[:sizes-15]+"..."+s[-14:]
 		
 def buildpathlist(args, paths=None):

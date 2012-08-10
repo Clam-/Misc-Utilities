@@ -20,11 +20,6 @@ log = getLogger("treeprinter")
 
 from codecs import open as codopen
 
-try: from progressbar import ProgressBar, Percentage, Bar, AnimatedMarker, Timer, ETA
-except: 
-	print "You need this: http://pypi.python.org/pypi/progressbar"
-	exit(1)
-
 try:
 	import win32com.client 
 except:
@@ -39,7 +34,8 @@ class ProgressWrapper:
 		self.total = 0
 	def update(self, amount):
 		self.total += amount
-		self.progress.update(self.total)
+		try: self.progress.update(self.total)
+		except: pass
 	def finish(self):
 		self.progress.finish()
 	
@@ -205,7 +201,8 @@ defaults = {
 	"minsize" : None,
 	"maxsize" : None,
 	"progress" : False,
-	"quiet" : False
+	"quiet" : False,
+	"sortby" : "name"
 }
 	
 parser = OptionParser(usage="usage: %prog [options] [dir[s]/drive[s]]")
@@ -249,6 +246,8 @@ parser.add_option("--min-size", dest="minsize", metavar="SIZE", default=None,
 	help="Files/dirs will need to be at least this big before being printed. Size is in bytes. Default: no limit. If you need to overrite your config, you can use 0 to mean the same.")
 parser.add_option("--max-size", dest="maxsize", metavar="SIZE", default=None,
 	help="Files/dirs will need to be at most this big before being printed. Size is in bytes. Default: no limit. If you need to overrite your config, you can use 0 to mean the same.")
+parser.add_option("--sort-by", dest="sortby", default=None,
+	help="Sort by one of the following: name size. Default: name")
 parser.add_option("--debug", dest="debug", default=None,
 	help="Print some debug infos. 0=nothing 1=print 2=file 3=both")
 
@@ -304,10 +303,18 @@ if options.maxsize:
 		options.maxsize = None
 else: options.maxsize = None
 
+if options.sortby != "name" or options.sortby != "size":
+	log.warn("Invalid --sort-by value (%s). Using name." % options.sortby)
+	options.sortby = "name"
+
 if options.quiet:
 	LogUtil.quiet = True
 	
 if options.progress:
+	try: from progressbar import AnimatedMarker, ProgressBar, Percentage, Bar, Timer, ETA
+	except: 
+		print "You need this: http://pypi.python.org/pypi/progressbar"
+		exit(1)
 	consolesize = Console.getconsolewidth()
 
 #END OPTION CRAP
