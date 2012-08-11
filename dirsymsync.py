@@ -45,7 +45,7 @@ class PermissionModError(Exception):
 
 #options
 parser = OptionParser(usage="usage: %prog [options] source storage",
-	description='%prog will replace files added to "source" with symlinks and store the\
+	description='%prog will replace files added to "source" with symlinks and store the \
 actual files in "storage." The order of these arguments is important.')
 parser.add_option("-p", "--perms", dest="perms", type="int", metavar="OCTAL",
 	help='Permission on "storage" directories. (Use 0 prefix, 2 for setgid) [02771]')
