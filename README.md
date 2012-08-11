@@ -1,6 +1,9 @@
 This is a bunch of utilities that I have put together that may (not) be useful for you.  
 See the wiki pages for more information on the tools:
 
+[dirsymsync](https://github.com/Clam-/Misc-Utilities/wiki/dirsymsync)  
+dirsymsync is a service that will synchronise two folders with one symlinking files to the other to get the effect of a "write once" "disallow delete" type scenario.
+
 [FileHashTools](http://github.com/Clam-/Misc-Utilities/wiki/FileHashTools)  
 FileHashTools is a tool that lets you work with checksums and files. It can be used to verify checksums that are embedded in filenames, or it can be used to create/verify checksum files.
 
