@@ -10,8 +10,8 @@
 # if using lftp you need to use the -p flag when mirror'ing (-R to upload)
 # See wiki for more infos I guess
 
-from pyinotify import ProcessEvent, WatchManager, Notifier,\
-	IN_CLOSE_WRITE, IN_MOVED_TO, IN_DELETE, IN_CREATE, IN_ATTRIB
+from pyinotify import ProcessEvent, WatchManager, Notifier, IN_CLOSE_WRITE,\
+	IN_MOVED_TO, IN_DELETE, IN_CREATE, IN_ATTRIB, IN_MOVED_FROM, IN_MOVE_SELF
 
 from os import chmod, getuid, listdir, mkdir, makedirs, symlink, unlink, lstat, rename, umask
 from os.path import dirname, exists, isdir, isfile, islink, lexists, join, realpath, relpath
@@ -42,6 +42,24 @@ class PermissionModError(Exception):
 	def __str__(self):
 		return repr(self.value)
 
+
+class Tracker(object):
+	def __init__(self):
+		self.inodes = {}
+	
+	#inode = stat(path).st_ino
+	def tracked(self, inode):
+		if inode in self.inodes:
+			self.inodes[inode] -= 1
+			if self.inodes[inode] == 0: del self.inodes[inode]
+			return True
+		return False
+		
+	def track(self, inode):
+		if inode in self.inodes:
+			self.inodes[inode] += 1
+		else:
+			self.inodes[inode] = 1
 
 #options
 parser = OptionParser(usage="usage: %prog [options] source storage",
@@ -81,7 +99,7 @@ if options.mailto: mailerargs["toaddr"] = options.mailto
 if options.mailfrom: mailerargs["fromaddr"] = options.mailfrom
 if options.mailsubject: mailerargs["subject"] = options.mailsubject
 options.user = getpwuid(getuid()).pw_name
-
+options.tracker = Tracker()
 mailer = None
 if options.mail:
 	mailer = Mailer(**mailerargs)
@@ -159,38 +177,53 @@ def symsyncstorage(source, storage, options):
 				makerelsymlink(newstorage, newsource)
 			
 
-def checkperms(path, options, storage=False):
+def checkperms(path, options, storage=False, logonly=True):
 	#make sure group is thing, too
 	perm = options.perms
 	st = lstat(path)
 	mode = st[ST_MODE]
+	groupmsg = ""
+	if storage and options.groupstorage:
+		#check group
+		name = getgrgid(st[ST_GID]).gr_name
+		if name != options.groupstorage: 
+			groupmsg = '\n[STOR] Group owner (%s) is not "%s" for: %s' % (name, options.groupstorage, path)
+			
+	elif (not storage) and options.groupsource:
+		#check group
+		name = getgrgid(st[ST_GID]).gr_name
+		if name != options.groupsource:
+			groupmsg = '\n[SRC] Group owner (%s) is not "%s" for: %s' % (name, options.groupsource, path)
+	
 	if S_ISDIR(mode): 
-		if not ((mode & S_ISGID) == S_ISGID) and options.setgidwarn: log.warn("setgid not set on: %s" % path)
+		msg = ""
+		if not ((mode & S_ISGID) == S_ISGID) and options.setgidwarn: 
+			msg = " (ALSO setgid not set on: %s)"
 		if storage:
 			if not ((mode & perm) == perm): 
 				#attempt fix
 				try: chmod(path, perms)
-				except OSError: log.warn("Unable to apply permission fix (%s) on %s" % (perm, path))
+				except OSError: 
+					if logonly: log.warn("Unable to apply permission fix (%o) on %s%s%s" % (perm, path, msg, groupmsg))
+					else:
+						raise PermissionModError("Directory does not have permissions (%o): %s%s" % (event.pathname, perm, groupmsg) )
 		if not ((mode & S_IRWXG) == S_IRWXG):
 			#attempt fix
 			try: chmod(path, mode | S_IRWXG)
-			except OSError: log.warn("Directory doesn't have group read/write/exec: %s" % path)
+			except OSError: 
+				if logonly: log.warn("Directory doesn't have group read/write/exec: %s%s%s" % (path, msg, groupmsg))
+				else:
+					raise PermissionModError("Directory does not have group read/write/exec: %s%s" % (event.pathname, groupmsg) )
+					
 	elif S_ISREG(mode):
 		tmask = S_IRGRP & S_IWGRP
 		if not ((mode & tmask) == tmask):
 			#attempt fix
 			try: chmod(path, mode | tmask)
-			except OSError: log.warn("File doesn't have group read/write: %s" % path)
-	if storage and options.groupstorage:
-		#check group
-		name = getgrgid(st[ST_GID]).gr_name
-		if name != options.groupstorage: 
-			log.warn('[STOR] Group owner (%s) is not "%s"' % (name, options.groupstorage))
-	elif (not storage) and options.groupsource:
-		#check group
-		name = getgrgid(st[ST_GID]).gr_name
-		if name != options.groupsource:
-			log.warn('[SRC] Group owner (%s) is not "%s"' % (name, options.groupsource))
+			except OSError: 
+				if logonly: log.warn("File doesn't have group read/write: %s%s" % (path, groupmsg) )
+				else:
+					raise PermissionModError("File does not have group read/write: %s%s" % (event.path, groupmsg) )
 
 def exceptionwrapper(func):
 	def fn(*args, **kwargs):
@@ -214,8 +247,11 @@ def makerelsymlink(source, dest):
 	symlink(relpath(source, destdir), dest)
 	
 def checkremlink(path, warn=True):
-	if lexists(path): 
-		if warn: log.warn("Broken symlink removed: %s -> %s" % (path, realpath(path)))
+	if not exists(path):
+		if lexists(path):
+			if warn: log.warn("Broken symlink removed: %s -> %s" % (path, realpath(path)))
+			unlink(path)
+	else:
 		unlink(path)
 
 def makedir(path, perms=None):
@@ -224,7 +260,7 @@ def makedir(path, perms=None):
 		mkdir(path)
 		if perms:
 			chmod(path, perms)
-
+	
 class DummyHandler(ProcessEvent):
 	pass
 
@@ -244,6 +280,8 @@ class SourceHandler(ProcessEvent):
 				#create
 				log.debug("[SRC] Creating: %s" % npath)
 				makedir(npath, self.options.perms)
+			#this will raise exception and stop processing of this directive if bad permissions
+			checkperms(event.pathname, self.options, logonly=False)
 	
 	@exceptionwrapper
 	def process_IN_DELETE(self, event):
@@ -274,6 +312,7 @@ class SourceHandler(ProcessEvent):
 			copy(event.pathname, storfile)
 			log.debug("[SRC] Removing %s" % event.pathname)
 			unlink(event.pathname)
+			#checkperms(event.pathname, self.options, logonly=False)
 			#lol the following will happen because WE deleted original file
 			#~ log.info("[SRC] Symlinking: %s -> %s" % (event.pathname, storfile) )
 			#~ symlink(storfile, event.pathname)
@@ -281,14 +320,21 @@ class SourceHandler(ProcessEvent):
 	#do this sometime
 	@exceptionwrapper
 	def process_IN_MOVED_TO(self, event):
-		if checkowner(event.pathname, self.options.user): return
-		log.debug("[SRC] Reverting move %s -> %s" % (event.pathname, event.src_pathname) )
-		rename(event.pathname, event.src_pathname)
+		#move is very difficult.
+		# we are going to assume events are notified in order, and that hopefully not too
+		# many concurrent moves will happen, or rather, at all
+		# check if we have seen this inode move before:
+		log.debug("[SRC] Move event: %s -> %s" % (event.src_pathname, event.pathname) )
+		inode = lstat(event.pathname).st_ino
+		if not self.options.tracker.tracked(inode): #if we have seen this move, it means we have already processed it so do nothing
+			log.debug("[SRC] Move event NOT TRACKED: %s -> %s" % (event.src_pathname, event.pathname) )
+			#haven't seen this move so process (revert) it, then track it
+			rename(event.pathname, event.src_pathname)
+			self.options.tracker.track(inode)
 	
 	@exceptionwrapper
 	def process_IN_ATTRIB(self, event):
-		if checkowner(event.pathname, self.options.user): return
-		raise PermissionModError("Permission changed in: %s" % event.pathname)
+		checkperms(event.pathname, self.options, logonly=False)
 
 class StorageHandler(ProcessEvent):
 	def my_init(self, options):
@@ -337,13 +383,15 @@ class StorageHandler(ProcessEvent):
 	#do this sometime
 	@exceptionwrapper
 	def process_IN_MOVED_TO(self, event):
-		if checkowner(event.pathname, self.options.user): return
+		log.debug("[STOR] Moved happened. %s -> %s" % (event.src_pathname, event.pathname) )
 		npath = oppositerelpath(event.pathname, self.options.storage, self.options.source)
 		nsrc = oppositerelpath(event.src_pathname, self.options.storage, self.options.source)
 		if event.dir:
 			log.debug("[STOR] Moved STOR %s -> %s" % (event.src_pathname, event.pathname) )
-			log.debug("[STOR] Moving SRC %s -> %s" % (npath, nsrc) )
-			rename(npath, nsrc)
+			log.debug("[STOR] Moving SRC %s -> %s" % (nsrc, npath) )
+			inode = lstat(nsrc).st_ino
+			rename(nsrc, npath)
+			self.options.tracker.track(inode)
 		else:
 			#delete symlink and make new one since delete event won't remake since it doesn't exist anymore
 			checkremlink(nsrc, warn=False)
@@ -351,8 +399,7 @@ class StorageHandler(ProcessEvent):
 	
 	@exceptionwrapper
 	def process_IN_ATTRIB(self, event):
-		if checkowner(event.pathname, self.options.user): return
-		raise PermissionModError("Permission changed in: %s" % event.pathname)
+		checkperms(event.pathname, self.options, storage=True, logonly=False)
 
 
 log.info("Starting...")
@@ -375,7 +422,7 @@ wm = WatchManager()
 
 notifier = Notifier(wm, default_proc_fun=DummyHandler())
 # Add a new watch on /tmp for ALL_EVENTS.
-mask = IN_CLOSE_WRITE | IN_MOVED_TO | IN_DELETE | IN_CREATE | IN_ATTRIB
+mask = IN_CLOSE_WRITE | IN_MOVED_TO | IN_DELETE | IN_CREATE | IN_ATTRIB | IN_MOVED_FROM
 wm.add_watch(options.source, mask, rec=True, auto_add=True, proc_fun=SourceHandler(options=options))
 wm.add_watch(options.storage, mask, rec=True, auto_add=True, proc_fun=StorageHandler(options=options))
 # Loop forever and handle events.
