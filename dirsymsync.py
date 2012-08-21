@@ -206,14 +206,14 @@ def checkperms(path, options, storage=False, logonly=True):
 				except OSError: 
 					if logonly: log.warn("Unable to apply permission fix (%o) on %s%s%s" % (perm, path, msg, groupmsg))
 					else:
-						raise PermissionModError("Directory does not have permissions (%o): %s%s" % (event.pathname, perm, groupmsg) )
+						raise PermissionModError("Directory does not have permissions (%o): %s%s" % (path, perm, groupmsg) )
 		if not ((mode & S_IRWXG) == S_IRWXG):
 			#attempt fix
 			try: chmod(path, mode | S_IRWXG)
 			except OSError: 
 				if logonly: log.warn("Directory doesn't have group read/write/exec: %s%s%s" % (path, msg, groupmsg))
 				else:
-					raise PermissionModError("Directory does not have group read/write/exec: %s%s" % (event.pathname, groupmsg) )
+					raise PermissionModError("Directory does not have group read/write/exec: %s%s" % (path, groupmsg) )
 					
 	elif S_ISREG(mode):
 		tmask = S_IRGRP & S_IWGRP
@@ -223,7 +223,7 @@ def checkperms(path, options, storage=False, logonly=True):
 			except OSError: 
 				if logonly: log.warn("File doesn't have group read/write: %s%s" % (path, groupmsg) )
 				else:
-					raise PermissionModError("File does not have group read/write: %s%s" % (event.path, groupmsg) )
+					raise PermissionModError("File does not have group read/write: %s%s" % (path, groupmsg) )
 
 def exceptionwrapper(func):
 	def fn(*args, **kwargs):
