@@ -180,7 +180,10 @@ def symsyncstorage(source, storage, options):
 def checkperms(path, options, storage=False, logonly=True):
 	#make sure group is thing, too
 	perm = options.perms
-	st = lstat(path)
+	try: st = lstat(path)
+	except OSError: 
+		log.info("Not found, trying again...")
+		st = lstat(path)
 	mode = st[ST_MODE]
 	groupmsg = ""
 	if storage and options.groupstorage:
@@ -324,10 +327,10 @@ class SourceHandler(ProcessEvent):
 		# we are going to assume events are notified in order, and that hopefully not too
 		# many concurrent moves will happen, or rather, at all
 		# check if we have seen this inode move before:
-		log.debug("[SRC] Move event: %s -> %s" % (event.src_pathname, event.pathname) )
+		log.info("[SRC] Move event: %s -> %s" % (event.src_pathname, event.pathname) )
 		inode = lstat(event.pathname).st_ino
 		if not self.options.tracker.tracked(inode): #if we have seen this move, it means we have already processed it so do nothing
-			log.debug("[SRC] Move event NOT TRACKED: %s -> %s" % (event.src_pathname, event.pathname) )
+			log.info("[SRC] Move event NOT TRACKED: %s -> %s" % (event.src_pathname, event.pathname) )
 			#haven't seen this move so process (revert) it, then track it
 			rename(event.pathname, event.src_pathname)
 			self.options.tracker.track(inode)
@@ -383,12 +386,12 @@ class StorageHandler(ProcessEvent):
 	#do this sometime
 	@exceptionwrapper
 	def process_IN_MOVED_TO(self, event):
-		log.debug("[STOR] Moved happened. %s -> %s" % (event.src_pathname, event.pathname) )
+		log.info("[STOR] Moved happened. %s -> %s" % (event.src_pathname, event.pathname) )
 		npath = oppositerelpath(event.pathname, self.options.storage, self.options.source)
 		nsrc = oppositerelpath(event.src_pathname, self.options.storage, self.options.source)
 		if event.dir:
-			log.debug("[STOR] Moved STOR %s -> %s" % (event.src_pathname, event.pathname) )
-			log.debug("[STOR] Moving SRC %s -> %s" % (nsrc, npath) )
+			log.info("[STOR] Moved STOR %s -> %s" % (event.src_pathname, event.pathname) )
+			log.info("[STOR] Moving SRC %s -> %s" % (nsrc, npath) )
 			inode = lstat(nsrc).st_ino
 			rename(nsrc, npath)
 			self.options.tracker.track(inode)

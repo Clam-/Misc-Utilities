@@ -113,7 +113,7 @@ def _getsublist(s):
 			#from here on out, assume track of any kind.
 			m = TrackThings.regexTrack.match(line)
 			if m:
-				track.num = m.group(1)
+				track.num = m.group(1)-1
 				continue
 			if line == '|  + Track type: subtitles': track.subs = True
 			m = TrackThings.regexDefault.match(line)
