@@ -5,12 +5,14 @@
 
 from sys import platform, stderr
 from os import getcwdu, listdir, environ
-from os.path import isabs, abspath, exists, join
+from os.path import isabs, dirname, abspath, exists, join
+
+from codecs import open as codopen
 
 from logging import getLogger
 log = getLogger(__name__)
 
-version = 0.4
+version = 0.5
 
 def size_to_human(size, unit=1024, round=5):
 	if size:
@@ -118,3 +120,41 @@ def buildpathlist(args, paths=None):
 				paths.append(join(cwd,arg))
 
 	return paths
+
+#REQUIRE: 
+# * defaults must have all keys options has?
+# * options SHOULD have all default=None
+# * options MUST be in lowercase ~just because~
+# * parser.add_option("--no-config", dest="noconf", action="store_true", default=None,
+#		help='Do not attempt to read config file. Default is to always check for config.')
+#   ^ THIS
+# * parser.add_option("-c", "--config", dest="conf", default=None, metavar="CONFIGFILE",
+#	help='Read from CONFIGFILE otherwise [scriptname].conf in script location.')
+# anddd ^ THIS
+def combine_options_fromfile(defaults, options, fname, scriptpath):
+	fileoptions = {}
+	scriptpath = dirname(abspath(scriptpath))
+	if not options.noconf:
+		fname = join(scriptpath, fname)
+		if options.conf:
+			fname = options.conf
+		if exists(fname):
+			for x in codopen(fname, "r", "utf-8"):
+				x = x.strip()
+				if x == "": continue
+				elif x.startswith("#"): continue
+				try: setting, value = x.split("=", 1)
+				except ValueError: continue
+				setting = setting.rstrip().lower()
+				value = value.strip()
+				if setting in defaults:
+					if isinstance(defaults[setting], bool):
+						fileoptions[setting] = value.lower() in ("true","1","t","yes")
+					else:
+						fileoptions[setting] = value
+		else:
+			if options.debug:
+				log.warning("Config file (%s) not found." % fname)
+	for option in defaults:
+		if options.__dict__.get(option) == None:
+			options.__dict__[option] = fileoptions.get(option, defaults[option])	

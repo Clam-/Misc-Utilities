@@ -2,7 +2,7 @@
 
 #run python subextractreplace -h for helps
 
-#requires util.py >=0.3
+#requires util.py >=0.5
 
 # 0.2 Griff2.0-edit
 # 0.3 attempt dum unicodes handling
@@ -15,12 +15,12 @@
 
 from optparse import OptionParser
 try: 
-	from util import buildpathlist, version
-	if version < 0.3: 
-		print "util version too low. Need 0.3 or greater."
+	from util import buildpathlist, version, combine_options_fromfile
+	if version < 0.5: 
+		print "util version too low. Need 0.5 or greater."
 		exit(1)
-except:
-	print "util.py missing or version too low. Need 0.3 or greater."
+except ImportError:
+	print "util.py missing or version too low. Need 0.5 or greater."
 	exit(1)
 	
 
@@ -45,6 +45,7 @@ class TrackThings:
 	regexTitle = recompile(r"\| \+ Title\: (.*)")
 	regexSegUID = recompile(r"\| \+ Segment UID\: (.*)")
 	subtemplate = '"--language" "0:{lang}" "--track-name" "0:{trackname}" "--default-track" "0:{default}" "--forced-track" "0:no" "-s" "0" "-D" "-A" "-T" "--no-global-tags" "--no-chapters" "{fname}"'
+	regexCRC = recompile(r"[^a-zA-Z0-9][a-fA-F0-9]{8}[^a-zA-Z0-9]")
 	
 class Track:
 	def __init__(self, num=None):
@@ -160,7 +161,7 @@ def replacesubtext(oldfile, newfile, replacements):
 def extractsub(path, options):
 	dir, file = split(path)
 	log.info("** Processing: %s **" % file)
-	exe = join(options.mkvtools,"mkvinfo.exe")
+	exe = join(options.mkvtoolnix,"mkvinfo.exe")
 	chdir(dir)
 	output = runcommand('"%s" "%s"' % (exe,file), True)
 	
@@ -170,12 +171,12 @@ def extractsub(path, options):
 		log.info("** Extracting track: %s Default: %s **" % (track.num, track.default))
 		outnames.append('%s:"%s.%s%s%s"' % (track.num, splitext(file)[0], track.num, ".default" if track.default else "", track.ext))
 	
-	exe = join(options.mkvtools,"mkvextract.exe")
+	exe = join(options.mkvtoolnix,"mkvextract.exe")
 	runcommand('"%s" tracks "%s" %s' % (exe,file, " ".join(outnames)))
 		
 	tempfiles = []
-	if options.filename:
-		r = codopen(options.filename,"r","utf-8")
+	if options.file:
+		r = codopen(options.file,"r","utf-8")
 		reps = []
 		for x in r:
 			reps.append(x.strip().split('\t'))
@@ -192,7 +193,7 @@ def extractsub(path, options):
 				replacesubtext(oldfile, newfile, reps)
 				#TrackThings.subtemplate
 				# {lang}{trackname}{default}{fname}
-				if not options.default:
+				if options.default is None:
 					muxoptions.append(TrackThings.subtemplate.format(lang=track.lang, trackname=track.name, default="yes" if track.default else "no", fname=newfile))
 				else:
 					if track.num == options.default:
@@ -204,7 +205,7 @@ def extractsub(path, options):
 		# if remux do things here
 		if options.remux:
 			#--segment-uid
-			exe = join(options.mkvtools,"mkvmerge.exe")
+			exe = join(options.mkvtoolnix,"mkvmerge.exe")
 			#make backup folder
 			if exists("backups"):
 				if not isdir("backups"):
@@ -212,6 +213,9 @@ def extractsub(path, options):
 					exit(1)
 			else: mkdir("backups")
 			fn, ext = splitext(file)
+			newfname = "%s%s%s" % (fn, options.suffix, ext)
+			if options.removecrc:
+				newfname = TrackThings.regexCRC.sub("", newfname)
 			oldfname = "%s-old%s" % (fn, ext)
 			oldfname = join(dir, "backups", oldfname)
 			move(path, oldfname)
@@ -224,44 +228,69 @@ def extractsub(path, options):
 			if not options.noclean:
 				rmtree("backups")
 
+defaults = {
+	"file" : None,
+	"mkvtoolnix" : None,
+	"remux" : False,
+	"nobackup" : False,
+	"default" : None,
+	"keeporig" : False,
+	"suffix" : "",
+	"removecrc" : False,
+	"noclean" : False,
+	"debug" : False,
+}
 
 parser = OptionParser(usage="usage: %prog [options] [file[s]/dir[s]]")
-parser.add_option("-f", "--file", dest="filename", default=None,
+parser.add_option("-f", "--file", dest="file", default=None,
 	help="File to take replacements from", metavar="FILE")
-parser.add_option("-m", "--mkvtoolnix", dest="mkvtools", default=None,
+parser.add_option("-m", "--mkvtoolnix", dest="mkvtoolnix", default=None,
 	help="Location of MKVtoolnix files, i.e. folder with mkvinfo.exe in it", metavar="DIR")
-parser.add_option("-r", "--remux", action="store_true", dest="remux", default=False,
+parser.add_option("--no-config", dest="noconf", action="store_true", default=None,
+	help='Do not attempt to read config file. Default is to always check for config.')
+parser.add_option("-c", "--config", dest="conf", default=None, metavar="CONFIGFILE",
+	help='Read from CONFIGFILE otherwise [scriptname].conf in script location.')
+parser.add_option("-r", "--remux", action="store_true", dest="remux", default=None,
 	help="Remux replaced subs into new file(s). Default is not to do this. (Use -n to not keep backups of original files)")
-parser.add_option("-n", "--nobackup", action="store_true", dest="nobackup", default=False,
+parser.add_option("-n", "--nobackup", action="store_true", dest="nobackup", default=None,
 	help="Don't backup original files. Only useful when used with -r. Default is to keep backups.")
-parser.add_option("-d", "--default", dest="default", metavar="TRACKNUM",
+parser.add_option("-d", "--default", dest="default", metavar="TRACKNUM", default=None,
 	help="Changes the default track to the tracknumber specified. Only useful when remuxing with -r. If not specified, when remuxing the default is to use the replaced default track.")
-parser.add_option("-k", "--keeporig", action="store_true", dest="keep", default=False,
-	help="Keeps the original subtitle tracks in the remuxed file, therefore only useful when remuxing with -r. Otherwise only the replaced subtracks will be remuxed.")
-parser.add_option("--noclean", action="store_true", dest="noclean", default=False,
+parser.add_option("-k", "--keeporig", action="store_true", dest="keeporig", default=None,
+	help="Keeps the original subtitle tracks in the remuxed file, therefore only useful when remuxing with -r/--remux. Otherwise only the replaced subtracks will be remuxed.")
+parser.add_option("-p", "--suffix", dest="suffix", metavar="SUFFIX", default=None,
+	help="Adds SUFFIX to the remuxed file. Hence only applied when using -r/--remux")
+parser.add_option("--removecrc", action="store_true", dest="removecrc" default=None,
+	help="Removes CRC's from remuxed filenames. Hence only applied when using -r/--remux. WARNING: Has the potential to severely mangle filenames. Regex used: [^a-zA-Z0-9][a-fA-F0-9]{8}[^a-zA-Z0-9]")
+parser.add_option("--noclean", action="store_true", dest="noclean", default=None,
 	help="If remuxing, don't clean up temporary extracted subfiles. Default is to remove temp files when remuxing.")
-parser.add_option("--debug", action="store_true", dest="debug", default=False,
+parser.add_option("--debug", action="store_true", dest="debug", default=None,
 	help="Print debug stuff")
 	
 (options, args) = parser.parse_args()
 
+combine_options_fromfile(defaults, options, "subextractreplace.conf", __file__)
+
 if options.debug:
 	log.level=DEBUG
-if (not options.mkvtools) or (not exists(join(options.mkvtools,"mkvinfo.exe"))) or (not exists(join(options.mkvtools,"mkvextract.exe")))\
-	or (not exists(join(options.mkvtools,"mkvmerge.exe"))):
+	for x in options.__dict__:
+		log.debug("%s = %s" % (x, options.__dict__[x]))
+		
+if (not options.mkvtoolnix) or (not exists(join(options.mkvtoolnix,"mkvinfo.exe"))) or (not exists(join(options.mkvtoolnix,"mkvextract.exe")))\
+	or (not exists(join(options.mkvtoolnix,"mkvmerge.exe"))):
 	log.error("MKVtoolnix files not found. -h for help")
 	exit(1)
 
-if options.filename:
-	if isabs(options.filename):
-		if not exists(options.filename):
-			log.error("Replacement file not found.")
+if options.file:
+	if isabs(options.file):
+		if not exists(options.file):
+			log.error("Replacement file (%s) not found." % options.file)
 			exit(1)
 	else:
-		if exists(join(getcwdu(),options.filename)):
-			options.filename = join(getcwdu(),options.filename)
+		if exists(join(getcwdu(),options.file)):
+			options.file = join(getcwdu(),options.file)
 		else:
-			log.error("Replacement file not found.")
+			log.error("Replacement file (%s) not found." % join(getcwdu(),options.file))
 			exit(1)		
 
 paths = buildpathlist(args)

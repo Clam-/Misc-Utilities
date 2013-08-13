@@ -2,17 +2,17 @@
 
 #~90MB usage on 418GB of data spread out in 28,650 folders and 196,260 files
 
-from sys import exit, argv, stdout, stderr, path as scriptpath
+from sys import exit, argv, stdout, stderr
 from os.path import basename, splitdrive, isdir, islink, isfile, join, exists
 from os import stat, listdir
 from optparse import OptionParser
 try: 
-	from util import buildpathlist, size_to_human, LogUtil, version, Console
-	if version < 0.3: 
-		print "util version too low. Need 0.3 or greater."
+	from util import buildpathlist, combine_options_fromfile, size_to_human, LogUtil, version, Console
+	if version < 0.5: 
+		print "util version too low. Need 0.5 or greater."
 		exit(1)
-except:
-	print "util.py missing or version too low. Need 0.3 or greater."
+except ImportError:
+	print "util.py missing or version too low. Need 0.5 or greater."
 	exit(1)
 from logging import basicConfig, getLogger, DEBUG, INFO
 basicConfig(level=INFO, format="%(asctime)s %(levelname)s [%(name)s] %(message)s", datefmt="%Y%m%d %H:%M:%S")
@@ -220,6 +220,8 @@ parser.add_option("--quiet", dest="quiet", action="store_true", default=None,
 	help="Don't print results to stdout. Only makes sense to use this with --output.")
 parser.add_option("--no-config", dest="noconf", action="store_true", default=None,
 	help='Do not attempt to read config file. Default is to always check for config.')
+parser.add_option("-c", "--config", dest="conf", default=None, metavar="CONFIGFILE",
+	help='Read from CONFIGFILE otherwise [scriptname].conf in script location.')
 parser.add_option("-s", "--human-readable", dest="human", action="store_true", default=None,
 	help='Use human readable sizes. MiB, KiB, etc...')
 parser.add_option("--rounding", dest="rounding", default=None, metavar="ROUNDTO", 
@@ -254,26 +256,8 @@ parser.add_option("--debug", dest="debug", default=None,
 (options, args) = parser.parse_args()
 #grab defaults from file, and then override with commandlines.
 
-fileoptions = {}
-if not options.noconf:
-	fname = join(scriptpath[0], "treeprinter.conf")
-	if exists(fname):
-		for x in codopen(fname, "r", "utf-8"):
-			x = x.strip()
-			if x == "": continue
-			elif x.startswith("#"): continue
-			try: setting, value = x.split("=", 1)
-			except ValueError: continue
-			setting = setting.rstrip().lower()
-			value = value.strip()
-			if setting in defaults:
-				if isinstance(defaults[setting], bool):
-					fileoptions[setting] = value.lower() in ("true","1","t","yes")
-				else:
-					fileoptions[setting] = value
-for option in defaults:
-	if options.__dict__.get(option) == None:
-		options.__dict__[option] = fileoptions.get(option, defaults[option])
+combine_options_fromfile(defaults, options, "treeprinter.conf", __file__)
+
 if options.output:
 	LogUtil.f = codopen(options.output, "w", "utf-8")
 
@@ -304,7 +288,7 @@ if options.maxsize:
 else: options.maxsize = None
 
 if options.sortby != "name" or options.sortby != "size":
-	log.warn("Invalid --sort-by value (%s). Using name." % options.sortby)
+	log.warn("Invalid --sort-by value (%s). Using name." % repr(options.sortby))
 	options.sortby = "name"
 
 if options.quiet:
