@@ -219,7 +219,7 @@ def extractsub(path, options):
 			oldfname = "%s-old%s" % (fn, ext)
 			oldfname = join(dir, "backups", oldfname)
 			move(path, oldfname)
-			command = '{cmd} -o "{fname}" {oldsubs} "{oldfname}" {subs}'
+			command = u'{cmd} -o "{fname}" {oldsubs} "{oldfname}" {subs}'
 			log.info("** REMUXING FILE **")
 			runcommand(command.format(cmd=exe, fname=file, oldsubs="-S" if not options.keeporig else "", oldfname=oldfname, subs=" ".join(muxoptions)))
 			#also put subfiles into backup
