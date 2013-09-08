@@ -226,7 +226,11 @@ def extractsub(path, options):
 			for z in tempfiles:
 				move(join(dir,z), join(dir,"backups",z))
 			if not options.noclean:
-				rmtree("backups")
+				try: rmtree("backups")
+				except WindowsError:
+					try: rmtree("backups")
+					except WindowsError as e:
+						log.error("%s" % str(e))
 
 defaults = {
 	"file" : None,
@@ -260,7 +264,7 @@ parser.add_option("-k", "--keeporig", action="store_true", dest="keeporig", defa
 	help="Keeps the original subtitle tracks in the remuxed file, therefore only useful when remuxing with -r/--remux. Otherwise only the replaced subtracks will be remuxed.")
 parser.add_option("-p", "--suffix", dest="suffix", metavar="SUFFIX", default=None,
 	help="Adds SUFFIX to the remuxed file. Hence only applied when using -r/--remux")
-parser.add_option("--removecrc", action="store_true", dest="removecrc" default=None,
+parser.add_option("--removecrc", action="store_true", dest="removecrc", default=None,
 	help="Removes CRC's from remuxed filenames. Hence only applied when using -r/--remux. WARNING: Has the potential to severely mangle filenames. Regex used: [^a-zA-Z0-9][a-fA-F0-9]{8}[^a-zA-Z0-9]")
 parser.add_option("--noclean", action="store_true", dest="noclean", default=None,
 	help="If remuxing, don't clean up temporary extracted subfiles. Default is to remove temp files when remuxing.")
