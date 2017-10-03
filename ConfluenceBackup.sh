@@ -20,7 +20,7 @@ NOWFILE=`date +%Y%m%d-%H%M%S.zip`
 
 RESP=$(curl -s -o /dev/null -w "%{http_code}" -u $USERNAME:$PASSWORD -X POST -H "Content-Type: application/json" https://$INSTANCE/wiki/rest/obm/1.0/runbackup -d '{"cbAttachments":"true" }')
 
-if [ "$RESP" != "200" ]
+if [ "$RESP" != "200" ] 
 then
 	sendMail "Confluence Backup Error" "Error at runbackup"
 	exit 1
@@ -29,19 +29,22 @@ PERCENT="0"
 COUNTER=0
 while [ $COUNTER -lt 40]; do
 	PERCENT=$(curl -s -u $USERNAME:$PASSWORD -X GET -H "Content-Type: application/json" https://$INSTANCE/wiki/rest/obm/1.0/getprogress.json | jq .alternativePercentage)
-	if [ $PERCENT = "100%" ] then
+	if [ $PERCENT == "100%" ] 
+	then
 		break
 	fi
 	sleep 50
 done
-if [ $PERCENT != "100%" ] then
+if [ $PERCENT != "100%" ] 
+then
 	sendMail "Confluence Backup Error" "Error at getprogress: $PERCENT"
 	exit 1
 fi
 
 FNAME=$(curl -s -u $USERNAME:$PASSWORD -X GET -H "Content-Type: application/json" https://$INSTANCE/wiki/rest/obm/1.0/getprogress.json | jq .fileName)
 
-if [[ $FNAME == temp/filestore* ]] then
+if [[ $FNAME == temp/filestore* ]] 
+then
 	curl -L -f -o $NOWFILE -u $USERNAME:$PASSWORD "https://$INSTANCE/wiki/download/$FNAME" || { sendMail "Confluence Backup Error" "Error downloading $FNAME" ; exit 1; }
 	#temp/filestore/3e7fe66d-867a-46e0-a252-940f03966e73
 else
