@@ -18,9 +18,10 @@ NOWFILE=`date +%Y%m%d-%H%M%S.zip`
 
 
 
-RESP=$(curl -s -o /dev/null -w "%{http_code}" -u $USERNAME:$PASSWORD -X POST -H "Content-Type: application/json" https://$INSTANCE/wiki/rest/obm/1.0/runbackup -d '{"cbAttachments":"true" }')
+RESP=$(curl -s -w "\n%{http_code}" -u $USERNAME:$PASSWORD -X POST -H "Content-Type: application/json" https://$INSTANCE/wiki/rest/obm/1.0/runbackup -d '{"cbAttachments":"true" }')
+CODE=$(echo "$RESP" | tail -n1 )
 
-if [ "$RESP" != "200" ] 
+if [ "$CODE" != "200" ]
 then
 	sendMail "Confluence Backup Error" "Error at runbackup"
 	exit 1
