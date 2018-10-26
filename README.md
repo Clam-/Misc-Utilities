@@ -1,6 +1,9 @@
 This is a bunch of utilities that I have put together that may (not) be useful for you.  
 See the wiki pages for more information on the tools:
 
+dropboxlog  
+Tool to parse dumb Dropbox logs that embed JSON in to the 10th field. Converts it to plan CSV.
+
 [dirsymsync](https://github.com/Clam-/Misc-Utilities/wiki/dirsymsync)  
 dirsymsync is a service that will synchronise two folders with one symlinking files to the other to get the effect of a "write once" "disallow delete" type scenario.
 
