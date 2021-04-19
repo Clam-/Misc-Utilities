@@ -3,7 +3,7 @@ import unicodecsv as csv
 import json
 
 if len(sys.argv) != 2:
-    print "Need log file"
+    print("Need log file")
     sys.exit(1)
 
 COLTITLES = {}
@@ -34,7 +34,7 @@ for row in reader:
                 wrow[COLTITLES[key]] = d[key]
     except ValueError as ex:
         wrow = row
-        print "ERROR ON ROW: %s" % rownum
-        print ex
+        print("ERROR ON ROW: %s" % rownum)
+        print(ex)
     writer.writerow(wrow)
 writer.writerow(sorted(COLTITLES, key=lambda k: COLTITLES[k]))

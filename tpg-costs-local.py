@@ -36,7 +36,7 @@ MONTH = 0
 for file in listdir(IDIR):
 	fn = join(IDIR, file)
 	if "rec002" not in file: continue
-	print("Processing %s..." % fn)
+	print(("Processing %s..." % fn))
 	with open(fn, 'r') as csvfile:
 		creader = reader(csvfile)
 		first = True
@@ -63,7 +63,7 @@ for file in listdir(IDIR):
 						if int(row[15]) < 7000:
 							MONTHS[MONTH]["NATIONAL"] += int(row[15])
 					else:
-						print("UNEXPECTED NUMBER: %s" % row[10])
+						print(("UNEXPECTED NUMBER: %s" % row[10]))
 	MONTH += 1
 
 TOTAL = 0
@@ -80,11 +80,11 @@ with open('breakdown.csv', 'w') as csvfile:
 
 
 for key in NUMBERMAP:
-	print("%s: %s \t\t\t($%s)" % (key, NUMBERMAP[key], (NUMBERMAP[key]*COSTS[key])/100))
+	print(("%s: %s \t\t\t($%s)" % (key, NUMBERMAP[key], (NUMBERMAP[key]*COSTS[key])/100)))
 	TOTAL += (NUMBERMAP[key]*COSTS[key])
 print(locs)
 
-print("Total: %s" % (TOTAL/100))
+print(("Total: %s" % (TOTAL/100)))
 
 
 #~ 13: 117                         ($25.74)

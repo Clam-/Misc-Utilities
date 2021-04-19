@@ -38,7 +38,7 @@ def getsum(path,method):
 	
 	
 if len(argv) != 3:
-	print "Need filename and hash method [crc,md5]"
+	print("Need filename and hash method [crc,md5]")
 	exit(1)
 	
-print getsum(argv[1], argv[2])
+print(getsum(argv[1], argv[2]))

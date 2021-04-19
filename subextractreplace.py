@@ -17,10 +17,10 @@ from optparse import OptionParser
 try: 
 	from util import buildpathlist, version, combine_options_fromfile
 	if version < 0.5: 
-		print "util version too low. Need 0.5 or greater."
+		print("util version too low. Need 0.5 or greater.")
 		exit(1)
 except ImportError:
-	print "util.py missing or version too low. Need 0.5 or greater."
+	print("util.py missing or version too low. Need 0.5 or greater.")
 	exit(1)
 	
 
@@ -28,7 +28,7 @@ from os.path import isdir, exists, join, splitext, isabs, split
 from os import getcwdu, walk, chdir, mkdir
 from shutil import rmtree, move
 from subprocess import Popen, PIPE, STDOUT
-from cStringIO import StringIO
+from io import StringIO
 from re import compile as recompile
 from codecs import open as codopen
 
@@ -219,7 +219,7 @@ def extractsub(path, options):
 			oldfname = "%s-old%s" % (fn, ext)
 			oldfname = join(dir, "backups", oldfname)
 			move(path, oldfname)
-			command = u'{cmd} -o "{fname}" {oldsubs} "{oldfname}" {subs}'
+			command = '{cmd} -o "{fname}" {oldsubs} "{oldfname}" {subs}'
 			log.info("** REMUXING FILE **")
 			runcommand(command.format(cmd=exe, fname=file, oldsubs="-S" if not options.keeporig else "", oldfname=oldfname, subs=" ".join(muxoptions)))
 			#also put subfiles into backup

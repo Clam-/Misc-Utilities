@@ -35,10 +35,10 @@ from optparse import OptionParser
 try: 
 	from util import buildpathlist, version, LogUtil, Console
 	if version < 0.3: 
-		print "util version too low. Need 0.3 or greater."
+		print("util version too low. Need 0.3 or greater.")
 		exit(1)
 except:
-	print "util.py missing or version too low. Need 0.3 or greater."
+	print("util.py missing or version too low. Need 0.3 or greater.")
 	exit(1)
 	
 from logging import basicConfig, getLogger, DEBUG
@@ -214,7 +214,7 @@ def printsum(path,method,cont=False):
 					else:
 						log.warn("NOT FOUND: %s is not %s" % (fname,relpath(join(root,file))))
 						log.info("Continue from this point? y/(n):")
-						yesno = raw_input()
+						yesno = input()
 						if yesno != "y": 
 							"Bailing..."
 							exit()
@@ -271,7 +271,7 @@ elif options.contcreate:
 		log.error("Continue create doesn't really make sense without an output file. Bailing.")
 		exit(1)
 	log.warn("WARNING: ATTEMPING TO APPEND TO (%s). You should probably backup this file. \nPress button to continue." % options.output)
-	raw_input()
+	input()
 	copyfile(options.output, options.output+".tmp")
 	Globals.tmpfile = codopen(options.output+".tmp", "r", "utf-8")
 	LogUtil.f = codopen(options.output, "a", "utf-8")
@@ -282,7 +282,7 @@ if not options.contcreate:
 	if options.output:
 		if exists(options.output):
 			log.warn("WARNING: OVERWRITE (%s)? (y/n)" % options.output)
-			yesno = raw_input()
+			yesno = input()
 			if yesno != "y": 
 				log.info("Bailing...")
 				exit()
@@ -295,7 +295,7 @@ if options.quiet:
 if options.progress: 
 	try: from progressbar import ProgressBar, Percentage, Bar, Timer, ETA
 	except: 
-		print "You need this: http://pypi.python.org/pypi/progressbar"
+		print("You need this: http://pypi.python.org/pypi/progressbar")
 		exit(1)
 	Globals.progress = True
 

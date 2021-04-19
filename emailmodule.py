@@ -4,7 +4,7 @@
 from email.mime.text import MIMEText
 from subprocess import Popen, PIPE
 
-from Queue import Queue
+from queue import Queue
 from threading import Thread, Event
 from time import time, sleep
 from datetime import date

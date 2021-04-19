@@ -9,10 +9,10 @@ from optparse import OptionParser
 try: 
 	from util import buildpathlist, combine_options_fromfile, size_to_human, LogUtil, version, Console
 	if version < 0.5: 
-		print "util version too low. Need 0.5 or greater."
+		print("util version too low. Need 0.5 or greater.")
 		exit(1)
 except ImportError:
-	print "util.py missing or version too low. Need 0.5 or greater."
+	print("util.py missing or version too low. Need 0.5 or greater.")
 	exit(1)
 from logging import basicConfig, getLogger, DEBUG, INFO
 basicConfig(level=INFO, format="%(asctime)s %(levelname)s [%(name)s] %(message)s", datefmt="%Y%m%d %H:%M:%S")
@@ -23,9 +23,9 @@ from codecs import open as codopen
 try:
 	import win32com.client 
 except:
-	print '''You need this: http://sourceforge.net/projects/pywin32/files/pywin32/ '''
-	print "You have Python version:", version
-	print "Make sure you get the right pywin32 for your Python version. (Read the readme on that page)"
+	print('''You need this: http://sourceforge.net/projects/pywin32/files/pywin32/ ''')
+	print("You have Python version:", version)
+	print("Make sure you get the right pywin32 for your Python version. (Read the readme on that page)")
 	exit(1)
 
 class ProgressWrapper:
@@ -107,11 +107,11 @@ def processdir(path, obj, progress=None):
 				else:
 					log.warn("UNKNOWN OBJECT?? %s" % npath)
 		except IOError as e:
-			print e
-			print "Directory access error, stats not accumulated for this directory."
+			print(e)
+			print("Directory access error, stats not accumulated for this directory.")
 		except WindowsError as e:
-			print e
-			print "Folder access error, stats not accumulated for this folder."
+			print(e)
+			print("Folder access error, stats not accumulated for this folder.")
 	else:
 		log.warn("UNKNOWN OBJECT? %s" % path)
 
@@ -183,7 +183,7 @@ def printtree(node, options, level):
 	
 defaults = {
 	"all" : False,
-	"indent" : u" - ",
+	"indent" : " - ",
 	"nofiles" : False,
 	"nodirs" : False,
 	"output": None,
@@ -192,10 +192,10 @@ defaults = {
 	"dirfirst" : False,
 	"sortfirst" : True,
 	"dirnamebefore" : True,
-	"file" : u"{prefix}{size} {name}",
-	"dir" : u"{prefix}{size} {path}\\{name}\\",
-	"drivehead" : u"Drive {letter} [{name}] Serial: {serial} Used: {size} (Dirs: {totaldirs}, Files: {totalfiles})",
-	"drivefoot" : u"",
+	"file" : "{prefix}{size} {name}",
+	"dir" : "{prefix}{size} {path}\\{name}\\",
+	"drivehead" : "Drive {letter} [{name}] Serial: {serial} Used: {size} (Dirs: {totaldirs}, Files: {totalfiles})",
+	"drivefoot" : "",
 	"debug" : False,
 	"depth" : None,
 	"minsize" : None,
@@ -297,7 +297,7 @@ if options.quiet:
 if options.progress:
 	try: from progressbar import AnimatedMarker, ProgressBar, Percentage, Bar, Timer, ETA
 	except: 
-		print "You need this: http://pypi.python.org/pypi/progressbar"
+		print("You need this: http://pypi.python.org/pypi/progressbar")
 		exit(1)
 	consolesize = Console.getconsolewidth()
 
@@ -311,7 +311,7 @@ for drive in result:
 		log.debug("Skipping drive: %s" % drive.Caption)
 		continue
 	if drive.Caption in drives:
-		print "THIS SHOULDN'T HAPPEN"
+		print("THIS SHOULDN'T HAPPEN")
 		exit(1)
 	drives[drive.Caption] = Drive(name=drive.VolumeName, letter=drive.Caption, type=drive.Description, fs=drive.FileSystem,
 		serial=int(drive.VolumeSerialNumber, 16), size=int(drive.Size), free=int(drive.FreeSpace))

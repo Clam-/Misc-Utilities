@@ -41,7 +41,7 @@ class LogUtil:
 	@staticmethod
 	def printlog(s, d=1):
 		#0 nothing, 1 print, 2 file, 3 both
-		if not LogUtil.quiet: print s.encode("utf-8")
+		if not LogUtil.quiet: print(s.encode("utf-8"))
 		if LogUtil.f: LogUtil.f.write('%s\n' % s)
 
 def get_windows_term_width():
@@ -96,7 +96,7 @@ def buildpathlist(args, paths=None):
 		for arg in args:
 			if isabs(arg):
 				if exists(arg):
-					paths.append(unicode(arg))
+					paths.append(str(arg))
 				else:
 					log.warn("Path not found: %s" % arg)
 			
@@ -113,7 +113,7 @@ def buildpathlist(args, paths=None):
 		for arg in args:
 			if isabs(arg):
 				if exists(arg):
-					paths.append(unicode(arg))
+					paths.append(str(arg))
 				else:
 					log.warn("Path not found: %s" % arg)
 			elif exists(abspath(join(cwd,arg))):

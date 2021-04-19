@@ -26,7 +26,7 @@ from optparse import OptionParser
 from sys import exit
 
 #important if you aren't running from a shell running with umask 0002 already
-umask(0002)
+umask(0o002)
 #alternativly I could chmod everything after creation but that is kind of tedious.
 
 from emailmodule import Mailer
@@ -86,12 +86,12 @@ parser.add_option("--nosync", dest="sync", action="store_false",
 parser.add_option("--nomonitor", dest="monitor", action="store_false",
 	help="""Don't monitor "source" and "storage" directories for changes. (Only really useful if you are using --nosync)""")
 
-parser.set_defaults(perms=02771, mail=False, mailto=None, mailfrom=None, subject="Error happen",
+parser.set_defaults(perms=0o2771, mail=False, mailto=None, mailfrom=None, subject="Error happen",
 	setgidwarn=True, groupsource=None, groupstorage=None, sync=True, monitor=True)
 
 (options, args) = parser.parse_args()
 if len(args) < 2:
-	print 'dirsymsync requires at least "source" and "storage" directories to be specified.  Provided: %s\nExiting.' % args
+	print('dirsymsync requires at least "source" and "storage" directories to be specified.  Provided: %s\nExiting.' % args)
 	exit(1)
 options.source, options.storage = args[:2]
 mailerargs = {"sourcename" : "dirsymsync"}

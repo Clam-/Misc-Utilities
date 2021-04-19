@@ -5,9 +5,9 @@ from optparse import OptionParser
 from codecs import open as codopen
 from time import sleep
 from threading import Thread
-from Queue import Queue
+from queue import Queue
 from subprocess import Popen, PIPE
-from StringIO import StringIO
+from io import StringIO
 from os import devnull, fdopen, fsync
 from pty import openpty
 class ReadStuff(Thread):
@@ -23,10 +23,10 @@ class ReadStuff(Thread):
 		mf = fdopen(master, "rw")
 		p = Popen(args, stdout=slave, stdin=slave, stderr=open(devnull,"w")) #, stderr=open(devnull,"w")
 		try:
-			print p.returncode
+			print(p.returncode)
 			while p.returncode == None:
 				line = mf.readline()
-				print "a", line
+				print("a", line)
 				# if line == "":
 					# break
 				# elif line == "STOP\n":
@@ -40,11 +40,11 @@ class ReadStuff(Thread):
 				self.q.put(line.strip())
 				sleep(0.2)
 				p.poll()
-				print p.returncode
-			print "INPUT PROC CLOSED"
+				print(p.returncode)
+			print("INPUT PROC CLOSED")
 		except KeyboardInterrupt:
-			print "WATHAPPEN"
-		print "CLOSING INPUT THREAD"
+			print("WATHAPPEN")
+		print("CLOSING INPUT THREAD")
 
 parser = OptionParser(usage="usage: %prog [options] program [original program arguments]",
 	epilog=''' ''')
@@ -60,14 +60,14 @@ parser.add_option("--no-filefirst", dest="nofilefirst",
 	
 (options, args) = parser.parse_args()
 if not args:
-	print "MISSING PROGRAM TO LAUNCH (and it's params.) Exiting."
+	print("MISSING PROGRAM TO LAUNCH (and it's params.) Exiting.")
 	exit(1)
 
 buff = []
 if options.infile:
 	try: f = codopen(options.infile, "r", "utf-8")
 	except: 
-		print "Unable to open file (%s) for reading. Exiting." % options.infile
+		print("Unable to open file (%s) for reading. Exiting." % options.infile)
 		exit(1)
 	buff.append(f)
 if not options.nostdin:
@@ -79,13 +79,13 @@ if not options.nostdin:
 if not options.wait:
 	options.wait = 0
 
-print "Starting input thread"
+print("Starting input thread")
 console = Queue()
 tothread = Queue()
 cons = ReadStuff(console, tothread)
 cons.start()	
 
-print "EXECUTING: %s" % " ".join(args)
+print("EXECUTING: %s" % " ".join(args))
 
 p = Popen(args, stdin=PIPE)
 sleep(options.wait)
@@ -103,6 +103,6 @@ try:
 		p.poll()
 except KeyboardInterrupt:
 	tothread.put("\3")
-print "WAITING FOR THREAD..."
+print("WAITING FOR THREAD...")
 p.wait()
-print "DONE"
+print("DONE")
