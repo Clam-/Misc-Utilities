@@ -4,7 +4,7 @@
 #nothing to run here
 
 from sys import platform, stderr
-from os import getcwdu, listdir, environ
+from os import getcwd, listdir, environ
 from os.path import isabs, dirname, abspath, exists, join
 
 from codecs import open as codopen
@@ -32,7 +32,7 @@ def size_to_human(size, unit=1024, round=5):
 			if len(size) > round:
 				size = size[0:round].rstrip(".")
 		return size+unit_name
-	else: 
+	else:
 		return ""
 
 class LogUtil:
@@ -58,7 +58,7 @@ def get_windows_term_width():
 
 class Console:
 	width = None
-	
+
 	@staticmethod
 	def getconsolewidth():
 		if platform == "win32":
@@ -67,48 +67,48 @@ class Console:
 		else:
 			Console.width = int(environ.get('COLUMNS', 80)) - 1
 			return Console.width
-			
+
 	@staticmethod
 	def clearline(f=stderr):
 		if not Console.width:
 			Console.getconsolewidth()
 		f.write("\r%s\r" % (" "*Console.width))
-	
+
 	@staticmethod
 	def trimstring(s):
 		sizes = int(Console.width*(72/100.0))
 		return s if len(s) <= sizes else s[:sizes-15]+"..."+s[-14:]
-		
+
 def buildpathlist(args, paths=None):
 	if not paths:
 		paths = []
-	cwd = getcwdu()
-	
+	cwd = getcwd()
+
 	if not args:
 		paths.append(cwd)
 
 	elif platform == "win32":
 		from fnmatch import filter as fnfilter
 		#make list of paths here
-		
+
 		dircontents = None
-			
+
 		for arg in args:
 			if isabs(arg):
 				if exists(arg):
 					paths.append(str(arg))
 				else:
 					log.warn("Path not found: %s" % arg)
-			
+
 			elif exists(abspath(join(cwd,arg))):
 				paths.append(join(cwd,arg))
-			
+
 			else:
 				if not dircontents:
 					dircontents = listdir(cwd)
 				for fname in fnfilter(dircontents, arg):
 					paths.append(join(cwd,fname))
-		
+
 	else:
 		for arg in args:
 			if isabs(arg):
@@ -121,7 +121,7 @@ def buildpathlist(args, paths=None):
 
 	return paths
 
-#REQUIRE: 
+#REQUIRE:
 # * defaults must have all keys options has?
 # * options SHOULD have all default=None
 # * options MUST be in lowercase ~just because~
@@ -157,4 +157,4 @@ def combine_options_fromfile(defaults, options, fname, scriptpath):
 				log.warning("Config file (%s) not found." % fname)
 	for option in defaults:
 		if options.__dict__.get(option) == None:
-			options.__dict__[option] = fileoptions.get(option, defaults[option])	
+			options.__dict__[option] = fileoptions.get(option, defaults[option])

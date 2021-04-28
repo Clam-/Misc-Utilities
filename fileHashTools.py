@@ -1,9 +1,9 @@
-# fileHashTools.py  
+# fileHashTools.py
 
 # Moved to github. History in commit messages.
 # 1.1 Only import ProgressBar when needed. Better handling of file access errors. (Somewhat)
 # 1.0 Shouldn't crash with unicode, but it's a bit of a crude fix. Unicode filenames
-#	will only print correctly if the terminal is expecting encoded UTF-8 and if the 
+#	will only print correctly if the terminal is expecting encoded UTF-8 and if the
 #	filename is getting trimed, some unicode characters might break.
 #	Also made progress not fail on zero length files.
 # 0.9 Okay, actually made last change work now. Also md5 bugfix in printing
@@ -13,7 +13,7 @@
 # pre0.6 loldunno
 
 
-# Default mode is to verify files. 
+# Default mode is to verify files.
 # If you do NOT specify a file(s) then program will check to see if there are checksums in the
 # filenames of the current folder that match
 
@@ -26,25 +26,25 @@
 
 from zlib import crc32
 from sys import exit, platform
-from os import getcwdu, listdir, walk, fsync, stat
+from os import getcwd, listdir, walk, fsync, stat
 from os.path import abspath, basename, exists, isabs, isdir, isfile, join, splitext, relpath
 from hashlib import md5
 from codecs import open as codopen
 from shutil import copyfile
 from optparse import OptionParser
-try: 
+try:
 	from util import buildpathlist, version, LogUtil, Console
-	if version < 0.3: 
+	if version < 0.3:
 		print("util version too low. Need 0.3 or greater.")
 		exit(1)
 except:
 	print("util.py missing or version too low. Need 0.3 or greater.")
 	exit(1)
-	
+
 from logging import basicConfig, getLogger, DEBUG
 basicConfig(level=DEBUG, format="%(asctime)s %(levelname)s [%(name)s] %(message)s", datefmt="%Y%m%d %H:%M:%S")
 log = getLogger("FileHashTools")
-	
+
 #CRCregex = re.compile('\b[A-Fa-f0-9]{8}\b')
 #matches = CRCregex.findall(string)
 
@@ -59,7 +59,7 @@ class Globals:
 	progress = False
 	consolesize = 0
 	options = None
-	
+
 class Hash:
 	def __init__(self, chunk, method):
 		self.method = method
@@ -67,13 +67,13 @@ class Hash:
 			self.hash = crc32(chunk)
 		elif method == "md5":
 			self.hash = md5(chunk)
-	
+
 	def update(self, chunk):
 		if self.method == "crc":
 			self.hash = crc32(chunk,self.hash)
 		elif self.method == "md5":
 			self.hash.update(chunk)
-	
+
 	def gibehex(self):
 		if self.method == "crc":
 			return format((self.hash & 0xffffffff),"08X")
@@ -89,19 +89,19 @@ def getsum(path, method):
 		progress = ProgressBar(term_width=Globals.consolesize, widgets=widgets, maxval=size).start()
 	#lol arbitrary 2MB
 	try: h = Hash(f.read(2097152), method)
-	except Exception as e: 
+	except Exception as e:
 		LogUtil.printlog("Error: %s in %s" % (e, path))
 		return
 	if Globals.progress and progress: progress.update(f.tell())
 	try: chunk = f.read(2097152)
-	except Exception as e: 
+	except Exception as e:
 		LogUtil.printlog("Error: %s in %s" % (e, path))
 		return
 	if Globals.progress and progress: progress.update(f.tell())
 	while chunk:
 		h.update(chunk)
 		try: chunk = f.read(2097152)
-		except Exception as e: 
+		except Exception as e:
 			LogUtil.printlog("Error: %s in %s" % (e, path))
 			return
 		if Globals.progress and progress: progress.update(f.tell())
@@ -109,7 +109,7 @@ def getsum(path, method):
 	#if Globals.progress: progress.finish()
 	if Globals.progress: Console.clearline()
 	return h.gibehex()
-			
+
 def checkfile(path, method):
 	checksum = getsum(path, method)
 	if checksum in basename(path) or checksum in basename(path).upper():
@@ -119,13 +119,13 @@ def checkfile(path, method):
 	else:
 		Globals.failed += 1
 		LogUtil.printlog("Not found: %s in: %s" % (checksum,path))
-	# crc32(data) & 0xffffffff	
+	# crc32(data) & 0xffffffff
 
 def checkpath(path, method):
-	if not exists(path): 
+	if not exists(path):
 		log.warn("Not found: %s" % path)
 		return
-		
+
 	if isdir(path):
 		for fname in listdir(path):
 			if isdir(join(path,fname)):
@@ -146,14 +146,14 @@ def compsum(fname, hash, mode):
 	else:
 		if Globals.verbose: LogUtil.printlog("Hash match: Expecting: %s got %s for %s" % (hash, newhash, fname))
 		Globals.passed += 1
-	
+
 def checksums(fname, method):
 	f = codopen(fname,"rb","utf-8")
 	mode = None
 	if splitext(path)[1] == ".crc" or splitext(path)[1] == ".sfv":
 		mode = "crc"
 	else: mode = "md5"
-	
+
 	lineno = 0
 	for line in f:
 		if line.startswith("#") or line.startswith(";"):
@@ -163,16 +163,16 @@ def checksums(fname, method):
 		hash = None
 		if mode == "crc":
 			try: fname, hash = line.rsplit(None, 1)
-			except:	
+			except:
 				log.warn("Invalid line (%s): %s" % (lineno, line))
 				Globals.invalid += 1
 		else:
 			try: hash, fname = line.split(None, 1)
-			except:	
+			except:
 				log.warn("Invalid line (%s): %s" % (lineno, line))
 				Globals.invalid += 1
 		lineno += 1
-		
+
 		if isabs(fname):
 			if exists(fname):
 				compsum(fname,hash,mode)
@@ -215,11 +215,11 @@ def printsum(path,method,cont=False):
 						log.warn("NOT FOUND: %s is not %s" % (fname,relpath(join(root,file))))
 						log.info("Continue from this point? y/(n):")
 						yesno = input()
-						if yesno != "y": 
+						if yesno != "y":
 							"Bailing..."
 							exit()
 						cont=False
-				
+
 				if method == "crc":
 					LogUtil.printlog("%s %s" % (relpath(join(root,file)), getsum(join(root,file), method)))
 				else:
@@ -231,7 +231,7 @@ def printsum(path,method,cont=False):
 			LogUtil.printlog("%s %s" % (getsum(path,method), relpath(path)))
 
 # ######################### #
-Globals.cwd = getcwdu()
+Globals.cwd = getcwd()
 mode = "check"
 
 parser = OptionParser(usage="usage: %prog [options] [dir[s]/drive[s]]")
@@ -277,13 +277,13 @@ elif options.contcreate:
 	LogUtil.f = codopen(options.output, "a", "utf-8")
 else:
 	log.info("Checking...")
-	
+
 if not options.contcreate:
 	if options.output:
 		if exists(options.output):
 			log.warn("WARNING: OVERWRITE (%s)? (y/n)" % options.output)
 			yesno = input()
-			if yesno != "y": 
+			if yesno != "y":
 				log.info("Bailing...")
 				exit()
 		LogUtil.f = codopen(options.output, "w", "utf-8")
@@ -292,9 +292,9 @@ if options.verbose:
 	Globals.verbose = True
 if options.quiet:
 	LogUtil.quiet = True
-if options.progress: 
+if options.progress:
 	try: from progressbar import ProgressBar, Percentage, Bar, Timer, ETA
-	except: 
+	except:
 		print("You need this: http://pypi.python.org/pypi/progressbar")
 		exit(1)
 	Globals.progress = True
@@ -304,7 +304,7 @@ Globals.consolesize = Console.getconsolewidth()
 Globals.options = options
 
 paths = buildpathlist(args)
-			
+
 for path in paths:
 	if mode == "create":
 		printsum(path, options.method)

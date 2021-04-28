@@ -25,7 +25,7 @@ except ImportError:
 	
 
 from os.path import isdir, exists, join, splitext, isabs, split
-from os import getcwdu, walk, chdir, mkdir
+from os import getcwd, walk, chdir, mkdir
 from shutil import rmtree, move
 from subprocess import Popen, PIPE, STDOUT
 from io import StringIO
@@ -291,10 +291,10 @@ if options.file:
 			log.error("Replacement file (%s) not found." % options.file)
 			exit(1)
 	else:
-		if exists(join(getcwdu(),options.file)):
-			options.file = join(getcwdu(),options.file)
+		if exists(join(getcwd(),options.file)):
+			options.file = join(getcwd(),options.file)
 		else:
-			log.error("Replacement file (%s) not found." % join(getcwdu(),options.file))
+			log.error("Replacement file (%s) not found." % join(getcwd(),options.file))
 			exit(1)		
 
 paths = buildpathlist(args)
