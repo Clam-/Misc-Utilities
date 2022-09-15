@@ -1,3 +1,5 @@
+#TODO:  Skip first logon questions
+#       Task Schedule this.
 
 #function from https://superuser.com/a/1570605
 function Remove-LocalUserCompletely {
