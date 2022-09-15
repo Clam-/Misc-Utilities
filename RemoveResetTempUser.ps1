@@ -41,6 +41,7 @@ LogOffUser
 Write-Host "Cleaning user..."
 Remove-LocalUserCompletely -Name 'Banh User'
 Write-Host "Remaking user..."
-New-LocalUser -Name "Banh User" -Description "Description of this account." -NoPassword
+New-LocalUser -Name "Banh User" -Description "Description of this account." -NoPassword | Set-LocalUser -PasswordNeverExpires $true
+Add-LocalGroupMember -Member 'Banh User' -Group Users
 Write-Host "Done. Device is ready for new user. You can close this window now (it will automatically close in 30 seconds)"
 Start-Sleep -Seconds 30
