@@ -1,6 +1,5 @@
-#TODO:  Skip first logon questions
-#       Add Full Name
-#       Task Schedule this.
+#TODO:
+#       Task Schedule this. Not sure about this. Could cause problems if device loaned over longer period...
 
 #function from https://superuser.com/a/1570605
 function Remove-LocalUserCompletely {
@@ -41,10 +40,19 @@ function LogOffUser {
 # log off user
 LogOffUser
 
+#disable welcome screen thing
+#[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System]
+#"EnableFirstLogonAnimation"=dword:00000000
+#[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon]
+#"EnableFirstLogonAnimation"=dword:00000000
+Set-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Name EnableFirstLogonAnimation -Value 0
+Set-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon -Name EnableFirstLogonAnimation -Value 0
+
+
 Write-Host "Cleaning user..."
 Remove-LocalUserCompletely -Name 'BANH User'
 Write-Host "Remaking user..."
-New-LocalUser -Name "BANH User" -Description "Description of this account." -NoPassword | Set-LocalUser -PasswordNeverExpires $true
+New-LocalUser -Name "BANH User" -FullName "BANH User" -Description "Description of this account." -NoPassword | Set-LocalUser -PasswordNeverExpires $true
 Add-LocalGroupMember -Member 'BANH User' -Group Users
 Write-Host "Done. Device is ready for new user. You can close this window now (it will automatically close in 30 seconds)"
 Start-Sleep -Seconds 30
