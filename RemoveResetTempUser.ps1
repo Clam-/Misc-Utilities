@@ -52,7 +52,7 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlo
 #"DisablePrivacyExperience"=dword:00000001
 #[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\OOBE]
 #"DisablePrivacyExperience"=dword:00000001
-Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE" -Name DisablePrivacyExperience -Value 1
+REG ADD "HKLM\SOFTWARE\Policies\Microsoft\Windows\OOBE" -v DisablePrivacyExperience /t REG_DWORD /d 1
 #Disable Edge first login prompt
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name DisablePrivacyExperience -Value 1
 
