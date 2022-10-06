@@ -47,7 +47,12 @@ LogOffUser
 #"EnableFirstLogonAnimation"=dword:00000000
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name EnableFirstLogonAnimation -Value 0
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name EnableFirstLogonAnimation -Value 0
-
+# disable privacy prompt
+#[HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\OOBE]
+#"DisablePrivacyExperience"=dword:00000001
+#[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\OOBE]
+#"DisablePrivacyExperience"=dword:00000001
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE" -Name DisablePrivacyExperience -Value 0
 
 Write-Host "Cleaning user..."
 Remove-LocalUserCompletely -Name 'BANH User'
