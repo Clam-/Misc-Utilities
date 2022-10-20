@@ -10,8 +10,11 @@ function Remove-LocalUserCompletely {
     )
 
     process {
-        $user = Get-LocalUser -Name $Name -ErrorAction Stop
-
+        try {
+            $user = Get-LocalUser -Name $Name -ErrorAction Stop
+        } catch {
+            return
+        }
         # Remove the user from the account database
         Remove-LocalUser -SID $user.SID
 
