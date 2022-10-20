@@ -55,6 +55,7 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlo
 REG ADD "HKLM\SOFTWARE\Policies\Microsoft\Windows\OOBE" -v DisablePrivacyExperience /t REG_DWORD /d 1
 #Disable Edge first login prompt
 REG ADD "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v DisablePrivacyExperience /t REG_DWORD /d 1
+REG ADD "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v HideFirstRunExperience /t REG_DWORD /d 1
 
 Write-Host "Cleaning user..."
 Remove-LocalUserCompletely -Name 'BANH User'
