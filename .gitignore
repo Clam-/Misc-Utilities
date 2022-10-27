@@ -3,8 +3,7 @@
 
 #datafolder and setting
 data/
-bbm.json
-bbm.log
+.exe
 
 #archives
 *.7z
